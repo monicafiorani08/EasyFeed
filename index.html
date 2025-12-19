@@ -1,239 +1,106 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Smart Stable – Feeding App</title>
-
-<style>
-/* ===== DARK THEME ===== */
-body {
-  margin: 0;
-  font-family: "Segoe UI", sans-serif;
-  background: #0f172a;
-  color: #e5e7eb;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-/* ===== HEADER ===== */
-header {
-  width: 100%;
-  padding: 15px;
-  background: #020617;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-header h2 {
-  margin: 0;
-}
-
-.admin-toggle {
-  background: #22c55e;
-  border: none;
-  padding: 8px 14px;
-  border-radius: 20px;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-/* ===== CARD ===== */
-.card-container {
-  position: relative;
-  width: 90%;
-  max-width: 350px;
-  height: 420px;
-  margin-top: 30px;
-}
-
-.card {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(145deg, #020617, #1e293b);
-  border-radius: 20px;
-  padding: 20px;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.6);
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  transition: transform 0.3s ease, opacity 0.3s ease;
-}
-
-/* ===== CARD CONTENT ===== */
-.card h3 {
-  margin: 0;
-  font-size: 24px;
-}
-
-.info {
-  font-size: 14px;
-  opacity: 0.85;
-}
-
-.status {
-  text-align: center;
-  font-size: 18px;
-  padding: 10px;
-  border-radius: 12px;
-  background: #020617;
-}
-
-/* ===== SWIPE INDICATORS ===== */
-.like {
-  border: 2px solid #22c55e;
-}
-
-.nope {
-  border: 2px solid #ef4444;
-}
-
-/* ===== ADMIN PANEL ===== */
-.admin-panel {
-  display: none;
-  background: #020617;
-  padding: 20px;
-  border-radius: 16px;
-  margin-top: 20px;
-  width: 90%;
-  max-width: 350px;
-}
-
-.admin-panel input {
-  width: 100%;
-  padding: 8px;
-  margin-bottom: 8px;
-  border-radius: 8px;
-  border: none;
-}
-
-.admin-panel button {
-  width: 100%;
-  padding: 10px;
-  background: #3b82f6;
-  border: none;
-  border-radius: 12px;
-  color: white;
-  font-weight: bold;
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StableMate Cloud Sync</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    <style>
+        :root { --bg: #121212; --card: #1e1e1e; --accent: #ff4458; --text: #fff; }
+        body { background: var(--bg); color: var(--text); font-family: sans-serif; display: flex; flex-direction: column; align-items: center; margin: 0; height: 100vh; }
+        header { width: 100%; padding: 20px; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; }
+        #card-stack { position: relative; width: 320px; height: 450px; margin-top: 20px; }
+        .card { position: absolute; width: 100%; height: 100%; background: var(--card); border-radius: 20px; padding: 20px; box-sizing: border-box; transition: 0.3s; border: 1px solid #333; display: flex; flex-direction: column; justify-content: flex-end; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
+        .status { background: #ff9800; padding: 5px 10px; border-radius: 10px; font-size: 12px; width: fit-content; margin-bottom: 10px; }
+        .fed { background: #4caf50; }
+        #admin-panel { display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:var(--card); padding:20px; border-radius:15px; z-index:100; border:1px solid var(--accent); width: 80%; }
+        input { width: 100%; padding: 10px; margin: 5px 0; background: #333; border: none; color: white; border-radius: 5px; box-sizing: border-box; }
+        button { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 20px; width: 100%; cursor: pointer; font-weight: bold; margin-top: 10px; }
+    </style>
 </head>
-
 <body>
 
-<header>
-  <h2>🐴 Smart Stable</h2>
-  <button class="admin-toggle" onclick="toggleAdmin()">Admin</button>
-</header>
+    <header>
+        <h2>StableMate</h2>
+        <button onclick="checkAdmin()" style="width: auto; padding: 5px 15px;">Admin ⚙️</button>
+    </header>
 
-<div class="card-container">
-  <div id="card" class="card"></div>
-</div>
+    <div id="card-stack"></div>
 
-<!-- ADMIN PANEL -->
-<div class="admin-panel" id="adminPanel">
-  <h3>Add / Edit Horse</h3>
-  <input id="name" placeholder="Horse name">
-  <input id="weight" placeholder="Weight (kg)">
-  <input id="height" placeholder="Height (cm)">
-  <input id="quantity" placeholder="Food quantity (kg)">
-  <input id="time" type="time">
-  <button onclick="addHorse()">Save Horse</button>
-</div>
-
-<script>
-/* ===== CONFIG ===== */
-const ADMIN_PASSWORD = "admin123";
-
-/* ===== DATABASE (localStorage) ===== */
-let horses = JSON.parse(localStorage.getItem("horses")) || [];
-let index = 0;
-
-/* ===== RENDER CARD ===== */
-function renderCard() {
-  const card = document.getElementById("card");
-  if (horses.length === 0) {
-    card.innerHTML = "<h3>No horses added</h3>";
-    return;
-  }
-
-  const horse = horses[index];
-  card.className = "card";
-  card.innerHTML = `
-    <h3>${horse.name}</h3>
-    <div class="info">
-      Weight: ${horse.weight} kg<br>
-      Height: ${horse.height} cm<br>
-      Feed: ${horse.quantity} kg at ${horse.time}
+    <div id="admin-panel">
+        <h3>Add Horse</h3>
+        <input type="text" id="hName" placeholder="Name">
+        <input type="number" id="hWeight" placeholder="Weight (kg)">
+        <input type="text" id="hQty" placeholder="Feed Qty (grams)">
+        <button onclick="saveToFirebase()">Save to Cloud</button>
+        <button onclick="document.getElementById('admin-panel').style.display='none'" style="background:none">Close</button>
     </div>
-    <div class="status">
-      Status: ${horse.fed ? "✅ Fed" : "❌ Not fed"}
-    </div>
-  `;
 
-  enableSwipe(card);
-}
+    <script>
+        // PASTE YOUR FIREBASE CONFIG HERE
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com",
+            projectId: "YOUR_PROJECT_ID",
+        };
 
-/* ===== SWIPE LOGIC ===== */
-function enableSwipe(card) {
-  let startX = 0;
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
-  card.onpointerdown = e => startX = e.clientX;
-  card.onpointerup = e => {
-    let diff = e.clientX - startX;
-    if (diff > 80) feedHorse(true);
-    if (diff < -80) feedHorse(false);
-  };
-}
+        // Load Horses in Real-time
+        db.ref('horses').on('value', (snapshot) => {
+            const data = snapshot.val();
+            renderCards(data);
+        });
 
-/* ===== FEED ACTION ===== */
-function feedHorse(fed) {
-  horses[index].fed = fed;
-  localStorage.setItem("horses", JSON.stringify(horses));
+        function renderCards(data) {
+            const stack = document.getElementById('card-stack');
+            stack.innerHTML = '';
+            if(!data) return;
 
-  const card = document.getElementById("card");
-  card.style.transform = `translateX(${fed ? 400 : -400}px) rotate(${fed ? 15 : -15}deg)`;
-  card.style.opacity = 0;
+            Object.keys(data).forEach((id, index) => {
+                const horse = data[id];
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.style.zIndex = 100 - index;
+                card.innerHTML = `
+                    <div class="status ${horse.status === 'Fed' ? 'fed' : ''}">${horse.status}</div>
+                    <h1>${horse.name}</h1>
+                    <p>Weight: ${horse.weight}kg | Feed: ${horse.feedQty}g</p>
+                    <button onclick="markAsFed('${id}')">Feed Now</button>
+                `;
+                stack.appendChild(card);
+            });
+        }
 
-  setTimeout(() => {
-    index = (index + 1) % horses.length;
-    card.style.transform = "none";
-    card.style.opacity = 1;
-    renderCard();
-  }, 300);
-}
+        function checkAdmin() {
+            if(prompt("Admin Password:") === "1234") {
+                document.getElementById('admin-panel').style.display = 'block';
+            }
+        }
 
-/* ===== ADMIN ===== */
-function toggleAdmin() {
-  const pass = prompt("Enter admin password");
-  if (pass === ADMIN_PASSWORD) {
-    document.getElementById("adminPanel").style.display = "block";
-  } else {
-    alert("Wrong password");
-  }
-}
+        function saveToFirebase() {
+            const name = document.getElementById('hName').value;
+            const weight = document.getElementById('hWeight').value;
+            const qty = document.getElementById('hQty').value;
+            
+            if(name) {
+                db.ref('horses').push({
+                    name: name,
+                    weight: weight,
+                    feedQty: qty,
+                    status: "Waiting"
+                });
+                document.getElementById('admin-panel').style.display = 'none';
+            }
+        }
 
-function addHorse() {
-  horses.push({
-    name: name.value,
-    weight: weight.value,
-    height: height.value,
-    quantity: quantity.value,
-    time: time.value,
-    fed: false
-  });
-
-  localStorage.setItem("horses", JSON.stringify(horses));
-  name.value = weight.value = height.value = quantity.value = time.value = "";
-  renderCard();
-}
-
-/* ===== INIT ===== */
-renderCard();
-</script>
-
+        function markAsFed(id) {
+            db.ref('horses/' + id).update({ status: "Feeding..." });
+            // ESP32 will see this "Feeding..." status and start the motor
+        }
+    </script>
 </body>
 </html>
