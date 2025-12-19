@@ -3,105 +3,160 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Smart Horse Feeding System</title>
+<title>Smart Stable Dashboard</title>
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 
 <style>
-/* ---------- GLOBAL ---------- */
+/* ===== COLOR THEME ===== */
+:root {
+  --green: #2ecc71;
+  --blue: #3498db;
+  --yellow: #f1c40f;
+  --dark: #1f2933;
+  --light: #f4f6f8;
+}
+
+/* ===== GLOBAL ===== */
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
-  background: #f4f6f8;
+  font-family: "Segoe UI", sans-serif;
+  background: var(--light);
 }
 
 h2, h3 {
-  margin-top: 0;
+  margin: 0 0 10px;
 }
 
-button {
-  cursor: pointer;
-}
-
-/* ---------- LAYOUT ---------- */
+/* ===== LAYOUT ===== */
 .container {
   display: flex;
   height: 100vh;
 }
 
-/* ---------- LEFT PANEL ---------- */
-.left-panel {
-  width: 30%;
-  background: #1f2933;
+/* ===== SIDEBAR ===== */
+.sidebar {
+  width: 28%;
+  background: var(--dark);
   color: white;
-  padding: 10px;
+  padding: 15px;
   overflow-y: auto;
 }
 
-.left-panel input {
+.sidebar input {
   width: 100%;
-  padding: 6px;
-  margin-bottom: 6px;
-}
-
-.horse-item {
   padding: 8px;
-  background: #374151;
   margin-bottom: 6px;
-  border-radius: 4px;
+  border-radius: 6px;
+  border: none;
 }
 
-.horse-item:hover {
-  background: #4b5563;
+.sidebar button {
+  width: 100%;
+  padding: 8px;
+  background: var(--green);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
 }
 
-/* ---------- RIGHT PANEL ---------- */
-.right-panel {
-  width: 70%;
-  padding: 10px;
+.horse-card {
+  display: flex;
+  align-items: center;
+  background: #374151;
+  padding: 8px;
+  margin-top: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.horse-card:hover {
+  transform: scale(1.03);
+}
+
+.horse-card img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-right: 10px;
+  object-fit: cover;
+}
+
+/* ===== MAIN ===== */
+.main {
+  width: 72%;
+  padding: 15px;
   overflow-y: auto;
 }
 
-.table {
-  width: 100%;
-  border-collapse: collapse;
+/* ===== DASHBOARD ===== */
+.feed-dashboard {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.feed-row {
+  display: flex;
+  align-items: center;
   background: white;
+  padding: 10px;
+  border-radius: 10px;
+  justify-content: space-between;
 }
 
-.table th, .table td {
-  border: 1px solid #ddd;
-  padding: 6px;
-  text-align: center;
+.feed-row img {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  margin-right: 10px;
 }
 
-.table th {
-  background: #e5e7eb;
+.feed-row button {
+  background: var(--yellow);
+  border: none;
+  padding: 8px 14px;
+  border-radius: 20px;
+  font-weight: bold;
 }
 
-/* ---------- PROFILE ---------- */
+/* ===== PROFILE ===== */
 .profile {
   background: white;
-  padding: 10px;
-  margin-top: 10px;
-  border-radius: 6px;
+  padding: 15px;
+  border-radius: 12px;
+  margin-top: 15px;
 }
 
-/* ---------- HISTORY ---------- */
-.history {
-  background: white;
-  padding: 10px;
-  margin-top: 10px;
-  border-radius: 6px;
-  max-height: 150px;
-  overflow-y: auto;
+.profile input {
+  width: 100%;
+  padding: 6px;
+  margin-bottom: 6px;
 }
 
-/* ---------- MOBILE ---------- */
+/* ===== FEED ANIMATION ===== */
+@keyframes feedPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); background: var(--green); }
+  100% { transform: scale(1); }
+}
+
+.feeding {
+  animation: feedPulse 0.6s ease;
+}
+
+/* ===== MOBILE ===== */
 @media (max-width: 768px) {
   .container {
     flex-direction: column;
   }
-  .left-panel, .right-panel {
+  .sidebar, .main {
     width: 100%;
-    height: auto;
   }
 }
 </style>
@@ -111,131 +166,137 @@ button {
 
 <div class="container">
 
-  <!-- LEFT PANEL -->
-  <div class="left-panel">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
     <h3>Horses</h3>
-    <input id="horseName" placeholder="Add horse name" />
+    <input id="horseName" placeholder="Horse name">
+    <input type="file" id="horseImage">
     <button onclick="addHorse()">Add Horse</button>
     <div id="horseList"></div>
   </div>
 
-  <!-- RIGHT PANEL -->
-  <div class="right-panel">
-    <h2 id="selectedHorse">Select a horse</h2>
+  <!-- MAIN -->
+  <div class="main">
+    <h2>Feeding Dashboard</h2>
+    <div id="dashboard" class="feed-dashboard"></div>
 
-    <!-- FEEDING TABLE -->
-    <table class="table">
-      <tr>
-        <th>Food Type</th>
-        <th>Quantity (kg)</th>
-        <th>Feeding Time</th>
-        <th>Feed</th>
-      </tr>
-      <tr>
-        <td><input id="foodType"></td>
-        <td><input id="foodQty" type="number"></td>
-        <td><input id="foodTime" type="time"></td>
-        <td><button onclick="feedHorse()">Feed</button></td>
-      </tr>
-    </table>
-
-    <!-- PROFILE -->
     <div class="profile">
-      <h3>Horse Profile</h3>
-      <label>Weight (kg):</label>
-      <input id="weight"><br><br>
-      <label>Height (cm):</label>
-      <input id="height"><br><br>
-      <label>Traits / Markings:</label>
-      <input id="traits"><br><br>
+      <h3 id="profileName">Select a horse</h3>
+      <input id="weight" placeholder="Weight (kg)">
+      <input id="height" placeholder="Height (cm)">
+      <input id="traits" placeholder="Traits / markings">
       <button onclick="saveProfile()">Save Profile</button>
     </div>
-
-    <!-- HISTORY -->
-    <div class="history">
-      <h3>Feeding History</h3>
-      <ul id="historyList"></ul>
-    </div>
-
   </div>
+
 </div>
 
 <script>
-let horses = {};
-let currentHorse = null;
+/* ===== FIREBASE CONFIG (REPLACE THIS) ===== */
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  projectId: "YOUR_PROJECT",
+  storageBucket: "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "XXXX",
+  appId: "XXXX"
+};
 
-function addHorse() {
-  const name = document.getElementById("horseName").value;
-  if (!name) return;
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const storage = firebase.storage();
 
-  horses[name] = {
+let selectedHorseId = null;
+
+/* ===== ADD HORSE ===== */
+async function addHorse() {
+  const name = horseName.value;
+  const file = horseImage.files[0];
+  if (!name || !file) return alert("Name and image required");
+
+  const ref = storage.ref("horses/" + Date.now());
+  await ref.put(file);
+  const imageUrl = await ref.getDownloadURL();
+
+  await db.collection("horses").add({
+    name,
+    image: imageUrl,
     profile: {},
     history: []
-  };
+  });
 
-  document.getElementById("horseName").value = "";
-  renderHorses();
+  horseName.value = "";
+  horseImage.value = "";
+  loadHorses();
 }
 
-function renderHorses() {
-  const list = document.getElementById("horseList");
-  list.innerHTML = "";
-  Object.keys(horses).forEach(horse => {
-    const div = document.createElement("div");
-    div.className = "horse-item";
-    div.innerText = horse;
-    div.onclick = () => selectHorse(horse);
-    list.appendChild(div);
+/* ===== LOAD HORSES ===== */
+async function loadHorses() {
+  horseList.innerHTML = "";
+  dashboard.innerHTML = "";
+
+  const snapshot = await db.collection("horses").get();
+  snapshot.forEach(doc => {
+    const horse = doc.data();
+
+    // Sidebar
+    const card = document.createElement("div");
+    card.className = "horse-card";
+    card.innerHTML = `<img src="${horse.image}"><span>${horse.name}</span>`;
+    card.onclick = () => selectHorse(doc.id, horse);
+    horseList.appendChild(card);
+
+    // Dashboard
+    const row = document.createElement("div");
+    row.className = "feed-row";
+    row.innerHTML = `
+      <div style="display:flex;align-items:center">
+        <img src="${horse.image}">
+        <strong>${horse.name}</strong>
+      </div>
+      <button onclick="feedHorse('${doc.id}', this)">Feed</button>
+    `;
+    dashboard.appendChild(row);
   });
 }
 
-function selectHorse(name) {
-  currentHorse = name;
-  document.getElementById("selectedHorse").innerText = name;
-
-  const profile = horses[name].profile;
-  document.getElementById("weight").value = profile.weight || "";
-  document.getElementById("height").value = profile.height || "";
-  document.getElementById("traits").value = profile.traits || "";
-
-  renderHistory();
+/* ===== SELECT HORSE ===== */
+function selectHorse(id, horse) {
+  selectedHorseId = id;
+  profileName.innerText = horse.name;
+  weight.value = horse.profile?.weight || "";
+  height.value = horse.profile?.height || "";
+  traits.value = horse.profile?.traits || "";
 }
 
-function saveProfile() {
-  if (!currentHorse) return;
-  horses[currentHorse].profile = {
-    weight: document.getElementById("weight").value,
-    height: document.getElementById("height").value,
-    traits: document.getElementById("traits").value
-  };
+/* ===== SAVE PROFILE ===== */
+async function saveProfile() {
+  if (!selectedHorseId) return;
+  await db.collection("horses").doc(selectedHorseId).update({
+    profile: {
+      weight: weight.value,
+      height: height.value,
+      traits: traits.value
+    }
+  });
   alert("Profile saved");
 }
 
-function feedHorse() {
-  if (!currentHorse) return;
+/* ===== FEED HORSE ===== */
+async function feedHorse(id, btn) {
+  btn.classList.add("feeding");
+  setTimeout(() => btn.classList.remove("feeding"), 600);
 
   const time = new Date().toLocaleTimeString();
-  horses[currentHorse].history.push(time);
-  renderHistory();
-
-  /* Placeholder for ESP32 WiFi / Bluetooth control
-     In real implementation:
-     - Send feeding command to dispenser
-     - Receive confirmation
-  */
+  await db.collection("horses").doc(id).update({
+    history: firebase.firestore.FieldValue.arrayUnion(time)
+  });
 
   alert("Horse fed at " + time);
 }
 
-function renderHistory() {
-  const list = document.getElementById("historyList");
-  list.innerHTML = "";
-  horses[currentHorse].history.forEach(h => {
-    const li = document.createElement("li");
-    li.innerText = h;
-    list.appendChild(li);
-  });
-}
+/* ===== INIT ===== */
+loadHorses();
 </script>
 
 </body>
