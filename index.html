@@ -3,104 +3,213 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StableMate Cloud Sync</title>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    <title>StableMate - Horse Feeding Tracker</title>
     <style>
-        :root { --bg: #121212; --card: #1e1e1e; --accent: #ff4458; --text: #fff; }
-        body { background: var(--bg); color: var(--text); font-family: sans-serif; display: flex; flex-direction: column; align-items: center; margin: 0; height: 100vh; }
-        header { width: 100%; padding: 20px; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; }
-        #card-stack { position: relative; width: 320px; height: 450px; margin-top: 20px; }
-        .card { position: absolute; width: 100%; height: 100%; background: var(--card); border-radius: 20px; padding: 20px; box-sizing: border-box; transition: 0.3s; border: 1px solid #333; display: flex; flex-direction: column; justify-content: flex-end; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
-        .status { background: #ff9800; padding: 5px 10px; border-radius: 10px; font-size: 12px; width: fit-content; margin-bottom: 10px; }
-        .fed { background: #4caf50; }
-        #admin-panel { display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:var(--card); padding:20px; border-radius:15px; z-index:100; border:1px solid var(--accent); width: 80%; }
-        input { width: 100%; padding: 10px; margin: 5px 0; background: #333; border: none; color: white; border-radius: 5px; box-sizing: border-box; }
-        button { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 20px; width: 100%; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --accent: #ff4458; /* Tinder-like pink/red */
+            --text: #ffffff;
+            --secondary-text: #b3b3b3;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Header & Admin Toggle */
+        header {
+            width: 100%;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-sizing: border-box;
+        }
+
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Swipe Card Container */
+        #card-stack {
+            position: relative;
+            width: 90%;
+            max-width: 350px;
+            height: 500px;
+            margin-top: 20px;
+        }
+
+        .card {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: var(--card-bg);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 20px;
+            box-sizing: border-box;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            cursor: grab;
+            border: 1px solid #333;
+        }
+
+        .card h2 { margin: 0; font-size: 24px; }
+        .card p { color: var(--secondary-text); margin: 5px 0; }
+        
+        .status-badge {
+            background: #4caf50;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            width: fit-content;
+        }
+
+        /* Admin Modal */
+        #admin-panel {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 15px;
+            z-index: 100;
+            width: 80%;
+            max-width: 400px;
+            border: 1px solid var(--accent);
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            background: #333;
+            border: none;
+            color: white;
+            border-radius: 5px;
+        }
+
+        button {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 25px;
+            width: 100%;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 99;
+        }
     </style>
 </head>
 <body>
 
     <header>
-        <h2>StableMate</h2>
-        <button onclick="checkAdmin()" style="width: auto; padding: 5px 15px;">Admin ⚙️</button>
+        <h1>StableMate</h1>
+        <div class="toggle-container">
+            <span>Admin</span>
+            <input type="checkbox" id="adminToggle" onchange="toggleAdmin()">
+        </div>
     </header>
 
-    <div id="card-stack"></div>
+    <div id="card-stack">
+        </div>
 
+    <div id="overlay" class="overlay"></div>
     <div id="admin-panel">
-        <h3>Add Horse</h3>
-        <input type="text" id="hName" placeholder="Name">
+        <h3>Add New Horse</h3>
+        <input type="text" id="hName" placeholder="Horse Name">
         <input type="number" id="hWeight" placeholder="Weight (kg)">
-        <input type="text" id="hQty" placeholder="Feed Qty (grams)">
-        <button onclick="saveToFirebase()">Save to Cloud</button>
-        <button onclick="document.getElementById('admin-panel').style.display='none'" style="background:none">Close</button>
+        <input type="number" id="hHeight" placeholder="Height (cm)">
+        <input type="text" id="hQty" placeholder="Feeding Qty">
+        <button onclick="saveHorse()">Add Horse</button>
+        <button onclick="closeAdmin()" style="background:none; margin-top:10px;">Cancel</button>
     </div>
 
     <script>
-        // PASTE YOUR FIREBASE CONFIG HERE
-        const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com",
-            projectId: "YOUR_PROJECT_ID",
-        };
+        const horses = [
+            { name: "Thunder", weight: "500kg", status: "Fed", color: "#3a3a3a" },
+            { name: "Spirit", weight: "450kg", status: "Feeding...", color: "#2a2a2a" }
+        ];
 
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
+        const stack = document.getElementById('card-stack');
 
-        // Load Horses in Real-time
-        db.ref('horses').on('value', (snapshot) => {
-            const data = snapshot.val();
-            renderCards(data);
-        });
-
-        function renderCards(data) {
-            const stack = document.getElementById('card-stack');
+        function renderCards() {
             stack.innerHTML = '';
-            if(!data) return;
-
-            Object.keys(data).forEach((id, index) => {
-                const horse = data[id];
+            horses.forEach((horse, index) => {
                 const card = document.createElement('div');
                 card.className = 'card';
-                card.style.zIndex = 100 - index;
+                card.style.zIndex = horses.length - index;
                 card.innerHTML = `
-                    <div class="status ${horse.status === 'Fed' ? 'fed' : ''}">${horse.status}</div>
-                    <h1>${horse.name}</h1>
-                    <p>Weight: ${horse.weight}kg | Feed: ${horse.feedQty}g</p>
-                    <button onclick="markAsFed('${id}')">Feed Now</button>
+                    <div class="status-badge">${horse.status}</div>
+                    <h2>${horse.name}</h2>
+                    <p>Weight: ${horse.weight}</p>
+                    <p style="font-size: 12px;">Swipe right to mark as fed</p>
                 `;
+                
+                // Simple Click-to-Dismiss (Simulating Swipe)
+                card.onclick = () => {
+                    card.style.transform = 'translateX(200px) rotate(20deg)';
+                    card.style.opacity = '0';
+                    setTimeout(() => card.remove(), 300);
+                };
+                
                 stack.appendChild(card);
             });
         }
 
-        function checkAdmin() {
-            if(prompt("Admin Password:") === "1234") {
-                document.getElementById('admin-panel').style.display = 'block';
+        function toggleAdmin() {
+            const checkbox = document.getElementById('adminToggle');
+            if(checkbox.checked) {
+                const pw = prompt("Enter Admin Password:");
+                if(pw === "1234") {
+                    document.getElementById('admin-panel').style.display = 'block';
+                    document.getElementById('overlay').style.display = 'block';
+                } else {
+                    alert("Wrong password!");
+                    checkbox.checked = false;
+                }
             }
         }
 
-        function saveToFirebase() {
+        function closeAdmin() {
+            document.getElementById('admin-panel').style.display = 'none';
+            document.getElementById('overlay').style.display = 'none';
+            document.getElementById('adminToggle').checked = false;
+        }
+
+        function saveHorse() {
             const name = document.getElementById('hName').value;
-            const weight = document.getElementById('hWeight').value;
-            const qty = document.getElementById('hQty').value;
-            
             if(name) {
-                db.ref('horses').push({
-                    name: name,
-                    weight: weight,
-                    feedQty: qty,
-                    status: "Waiting"
-                });
-                document.getElementById('admin-panel').style.display = 'none';
+                horses.unshift({ name: name, weight: document.getElementById('hWeight').value + 'kg', status: 'Waiting' });
+                renderCards();
+                closeAdmin();
             }
         }
 
-        function markAsFed(id) {
-            db.ref('horses/' + id).update({ status: "Feeding..." });
-            // ESP32 will see this "Feeding..." status and start the motor
-        }
+        renderCards();
     </script>
 </body>
 </html>
