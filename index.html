@@ -1,302 +1,238 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Smart Stable Dashboard</title>
-
-<!-- Firebase SDKs -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Stable – Feeding App</title>
 
 <style>
-/* ===== COLOR THEME ===== */
-:root {
-  --green: #2ecc71;
-  --blue: #3498db;
-  --yellow: #f1c40f;
-  --dark: #1f2933;
-  --light: #f4f6f8;
-}
-
-/* ===== GLOBAL ===== */
+/* ===== DARK THEME ===== */
 body {
   margin: 0;
   font-family: "Segoe UI", sans-serif;
-  background: var(--light);
-}
-
-h2, h3 {
-  margin: 0 0 10px;
-}
-
-/* ===== LAYOUT ===== */
-.container {
+  background: #0f172a;
+  color: #e5e7eb;
   display: flex;
-  height: 100vh;
-}
-
-/* ===== SIDEBAR ===== */
-.sidebar {
-  width: 28%;
-  background: var(--dark);
-  color: white;
-  padding: 15px;
-  overflow-y: auto;
-}
-
-.sidebar input {
-  width: 100%;
-  padding: 8px;
-  margin-bottom: 6px;
-  border-radius: 6px;
-  border: none;
-}
-
-.sidebar button {
-  width: 100%;
-  padding: 8px;
-  background: var(--green);
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-weight: bold;
-}
-
-.horse-card {
-  display: flex;
+  flex-direction: column;
   align-items: center;
-  background: #374151;
-  padding: 8px;
-  margin-top: 8px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: transform 0.2s;
 }
 
-.horse-card:hover {
-  transform: scale(1.03);
-}
-
-.horse-card img {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  margin-right: 10px;
-  object-fit: cover;
-}
-
-/* ===== MAIN ===== */
-.main {
-  width: 72%;
+/* ===== HEADER ===== */
+header {
+  width: 100%;
   padding: 15px;
-  overflow-y: auto;
-}
-
-/* ===== DASHBOARD ===== */
-.feed-dashboard {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 10px;
-}
-
-.feed-row {
+  background: #020617;
   display: flex;
-  align-items: center;
-  background: white;
-  padding: 10px;
-  border-radius: 10px;
   justify-content: space-between;
+  align-items: center;
 }
 
-.feed-row img {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  margin-right: 10px;
+header h2 {
+  margin: 0;
 }
 
-.feed-row button {
-  background: var(--yellow);
+.admin-toggle {
+  background: #22c55e;
   border: none;
   padding: 8px 14px;
   border-radius: 20px;
   font-weight: bold;
+  cursor: pointer;
 }
 
-/* ===== PROFILE ===== */
-.profile {
-  background: white;
-  padding: 15px;
-  border-radius: 12px;
-  margin-top: 15px;
+/* ===== CARD ===== */
+.card-container {
+  position: relative;
+  width: 90%;
+  max-width: 350px;
+  height: 420px;
+  margin-top: 30px;
 }
 
-.profile input {
+.card {
+  position: absolute;
   width: 100%;
-  padding: 6px;
-  margin-bottom: 6px;
+  height: 100%;
+  background: linear-gradient(145deg, #020617, #1e293b);
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: transform 0.3s ease, opacity 0.3s ease;
 }
 
-/* ===== FEED ANIMATION ===== */
-@keyframes feedPulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.1); background: var(--green); }
-  100% { transform: scale(1); }
+/* ===== CARD CONTENT ===== */
+.card h3 {
+  margin: 0;
+  font-size: 24px;
 }
 
-.feeding {
-  animation: feedPulse 0.6s ease;
+.info {
+  font-size: 14px;
+  opacity: 0.85;
 }
 
-/* ===== MOBILE ===== */
-@media (max-width: 768px) {
-  .container {
-    flex-direction: column;
-  }
-  .sidebar, .main {
-    width: 100%;
-  }
+.status {
+  text-align: center;
+  font-size: 18px;
+  padding: 10px;
+  border-radius: 12px;
+  background: #020617;
+}
+
+/* ===== SWIPE INDICATORS ===== */
+.like {
+  border: 2px solid #22c55e;
+}
+
+.nope {
+  border: 2px solid #ef4444;
+}
+
+/* ===== ADMIN PANEL ===== */
+.admin-panel {
+  display: none;
+  background: #020617;
+  padding: 20px;
+  border-radius: 16px;
+  margin-top: 20px;
+  width: 90%;
+  max-width: 350px;
+}
+
+.admin-panel input {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  border: none;
+}
+
+.admin-panel button {
+  width: 100%;
+  padding: 10px;
+  background: #3b82f6;
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-weight: bold;
 }
 </style>
 </head>
 
 <body>
 
-<div class="container">
+<header>
+  <h2>🐴 Smart Stable</h2>
+  <button class="admin-toggle" onclick="toggleAdmin()">Admin</button>
+</header>
 
-  <!-- SIDEBAR -->
-  <div class="sidebar">
-    <h3>Horses</h3>
-    <input id="horseName" placeholder="Horse name">
-    <input type="file" id="horseImage">
-    <button onclick="addHorse()">Add Horse</button>
-    <div id="horseList"></div>
-  </div>
+<div class="card-container">
+  <div id="card" class="card"></div>
+</div>
 
-  <!-- MAIN -->
-  <div class="main">
-    <h2>Feeding Dashboard</h2>
-    <div id="dashboard" class="feed-dashboard"></div>
-
-    <div class="profile">
-      <h3 id="profileName">Select a horse</h3>
-      <input id="weight" placeholder="Weight (kg)">
-      <input id="height" placeholder="Height (cm)">
-      <input id="traits" placeholder="Traits / markings">
-      <button onclick="saveProfile()">Save Profile</button>
-    </div>
-  </div>
-
+<!-- ADMIN PANEL -->
+<div class="admin-panel" id="adminPanel">
+  <h3>Add / Edit Horse</h3>
+  <input id="name" placeholder="Horse name">
+  <input id="weight" placeholder="Weight (kg)">
+  <input id="height" placeholder="Height (cm)">
+  <input id="quantity" placeholder="Food quantity (kg)">
+  <input id="time" type="time">
+  <button onclick="addHorse()">Save Horse</button>
 </div>
 
 <script>
-/* ===== FIREBASE CONFIG (REPLACE THIS) ===== */
-const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "XXXX",
-  appId: "XXXX"
-};
+/* ===== CONFIG ===== */
+const ADMIN_PASSWORD = "admin123";
 
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-const storage = firebase.storage();
+/* ===== DATABASE (localStorage) ===== */
+let horses = JSON.parse(localStorage.getItem("horses")) || [];
+let index = 0;
 
-let selectedHorseId = null;
+/* ===== RENDER CARD ===== */
+function renderCard() {
+  const card = document.getElementById("card");
+  if (horses.length === 0) {
+    card.innerHTML = "<h3>No horses added</h3>";
+    return;
+  }
 
-/* ===== ADD HORSE ===== */
-async function addHorse() {
-  const name = horseName.value;
-  const file = horseImage.files[0];
-  if (!name || !file) return alert("Name and image required");
+  const horse = horses[index];
+  card.className = "card";
+  card.innerHTML = `
+    <h3>${horse.name}</h3>
+    <div class="info">
+      Weight: ${horse.weight} kg<br>
+      Height: ${horse.height} cm<br>
+      Feed: ${horse.quantity} kg at ${horse.time}
+    </div>
+    <div class="status">
+      Status: ${horse.fed ? "✅ Fed" : "❌ Not fed"}
+    </div>
+  `;
 
-  const ref = storage.ref("horses/" + Date.now());
-  await ref.put(file);
-  const imageUrl = await ref.getDownloadURL();
-
-  await db.collection("horses").add({
-    name,
-    image: imageUrl,
-    profile: {},
-    history: []
-  });
-
-  horseName.value = "";
-  horseImage.value = "";
-  loadHorses();
+  enableSwipe(card);
 }
 
-/* ===== LOAD HORSES ===== */
-async function loadHorses() {
-  horseList.innerHTML = "";
-  dashboard.innerHTML = "";
+/* ===== SWIPE LOGIC ===== */
+function enableSwipe(card) {
+  let startX = 0;
 
-  const snapshot = await db.collection("horses").get();
-  snapshot.forEach(doc => {
-    const horse = doc.data();
-
-    // Sidebar
-    const card = document.createElement("div");
-    card.className = "horse-card";
-    card.innerHTML = `<img src="${horse.image}"><span>${horse.name}</span>`;
-    card.onclick = () => selectHorse(doc.id, horse);
-    horseList.appendChild(card);
-
-    // Dashboard
-    const row = document.createElement("div");
-    row.className = "feed-row";
-    row.innerHTML = `
-      <div style="display:flex;align-items:center">
-        <img src="${horse.image}">
-        <strong>${horse.name}</strong>
-      </div>
-      <button onclick="feedHorse('${doc.id}', this)">Feed</button>
-    `;
-    dashboard.appendChild(row);
-  });
+  card.onpointerdown = e => startX = e.clientX;
+  card.onpointerup = e => {
+    let diff = e.clientX - startX;
+    if (diff > 80) feedHorse(true);
+    if (diff < -80) feedHorse(false);
+  };
 }
 
-/* ===== SELECT HORSE ===== */
-function selectHorse(id, horse) {
-  selectedHorseId = id;
-  profileName.innerText = horse.name;
-  weight.value = horse.profile?.weight || "";
-  height.value = horse.profile?.height || "";
-  traits.value = horse.profile?.traits || "";
+/* ===== FEED ACTION ===== */
+function feedHorse(fed) {
+  horses[index].fed = fed;
+  localStorage.setItem("horses", JSON.stringify(horses));
+
+  const card = document.getElementById("card");
+  card.style.transform = `translateX(${fed ? 400 : -400}px) rotate(${fed ? 15 : -15}deg)`;
+  card.style.opacity = 0;
+
+  setTimeout(() => {
+    index = (index + 1) % horses.length;
+    card.style.transform = "none";
+    card.style.opacity = 1;
+    renderCard();
+  }, 300);
 }
 
-/* ===== SAVE PROFILE ===== */
-async function saveProfile() {
-  if (!selectedHorseId) return;
-  await db.collection("horses").doc(selectedHorseId).update({
-    profile: {
-      weight: weight.value,
-      height: height.value,
-      traits: traits.value
-    }
-  });
-  alert("Profile saved");
+/* ===== ADMIN ===== */
+function toggleAdmin() {
+  const pass = prompt("Enter admin password");
+  if (pass === ADMIN_PASSWORD) {
+    document.getElementById("adminPanel").style.display = "block";
+  } else {
+    alert("Wrong password");
+  }
 }
 
-/* ===== FEED HORSE ===== */
-async function feedHorse(id, btn) {
-  btn.classList.add("feeding");
-  setTimeout(() => btn.classList.remove("feeding"), 600);
-
-  const time = new Date().toLocaleTimeString();
-  await db.collection("horses").doc(id).update({
-    history: firebase.firestore.FieldValue.arrayUnion(time)
+function addHorse() {
+  horses.push({
+    name: name.value,
+    weight: weight.value,
+    height: height.value,
+    quantity: quantity.value,
+    time: time.value,
+    fed: false
   });
 
-  alert("Horse fed at " + time);
+  localStorage.setItem("horses", JSON.stringify(horses));
+  name.value = weight.value = height.value = quantity.value = time.value = "";
+  renderCard();
 }
 
 /* ===== INIT ===== */
-loadHorses();
+renderCard();
 </script>
 
 </body>
