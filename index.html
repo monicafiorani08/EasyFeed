@@ -1,215 +1,256 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StableMate - Horse Feeding Tracker</title>
-    <style>
-        :root {
-            --bg-color: #121212;
-            --card-bg: #1e1e1e;
-            --accent: #ff4458; /* Tinder-like pink/red */
-            --text: #ffffff;
-            --secondary-text: #b3b3b3;
-        }
+<meta charset="UTF-8">
+<title>StableMate - Horse Manager</title>
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text);
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            height: 100vh;
-            overflow: hidden;
-        }
+<style>
+:root {
+  --bg:#121212;
+  --card:#1e1e1e;
+  --accent:#ff4458;
+  --text:white;
+  --muted:#b3b3b3;
+}
 
-        /* Header & Admin Toggle */
-        header {
-            width: 100%;
-            padding: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-sizing: border-box;
-        }
+body{
+  background:var(--bg);
+  color:white;
+  font-family: Segoe UI, sans-serif;
+  margin: 0;
+  text-align: center;
+}
 
-        .toggle-container {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+header{
+  padding: 20px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
 
-        /* Swipe Card Container */
-        #card-stack {
-            position: relative;
-            width: 90%;
-            max-width: 350px;
-            height: 500px;
-            margin-top: 20px;
-        }
+#card-stack{
+  position:relative;
+  width: 90%;
+  max-width: 350px;
+  height: 500px;
+  margin:20px auto;
+}
 
-        .card {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            background: var(--card-bg);
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
-            padding: 20px;
-            box-sizing: border-box;
-            transition: transform 0.3s ease, opacity 0.3s ease;
-            cursor: grab;
-            border: 1px solid #333;
-        }
+.card{
+  position:absolute;
+  width:100%;
+  height: 100%;
+  background: var(--card);
+  border-radius:20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.5);
+  padding:20px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  border: 1px solid #333;
+}
 
-        .card h2 { margin: 0; font-size: 24px; }
-        .card p { color: var(--secondary-text); margin: 5px 0; }
-        
-        .status-badge {
-            background: #4caf50;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 12px;
-            width: fit-content;
-        }
+.card img{
+  width:100%;
+  height:300px;
+  object-fit: cover;
+  border-radius: 15px;
+}
 
-        /* Admin Modal */
-        #admin-panel {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: var(--card-bg);
-            padding: 30px;
-            border-radius: 15px;
-            z-index: 100;
-            width: 80%;
-            max-width: 400px;
-            border: 1px solid var(--accent);
-        }
+.status{
+  background:#4caf50;
+  padding:5px 10px;
+  border-radius:20px;
+  font-size: 12px;
+  width:fit-content;
+  margin-top:10px;
+}
 
-        input {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            background: #333;
-            border: none;
-            color: white;
-            border-radius: 5px;
-        }
+button{
+  background: var(--accent);
+  color:white;
+  border:none;
+  padding: 10px;
+  border-radius:20px;
+  width: 100%;
+  margin-top: 5px;
+  cursor:pointer;
+}
 
-        button {
-            background: var(--accent);
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 25px;
-            width: 100%;
-            cursor: pointer;
-            font-weight: bold;
-        }
+#admin-panel{
+  display:none;
+  position:  fixed;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  background:var(--card);
+  padding:20px;
+  border-radius: 15px;
+  width: 80%;
+  max-width: 400px;
+  z-index: 100;
+  border: 1px solid #333;
+}
 
-        .overlay {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8);
-            z-index: 99;
-        }
-    </style>
+#login-panel{
+  display: none;
+  position: fixed;
+  top:50%;
+  left:50%;
+  transform: translate(-50%,-50%);
+  background:var(--card);
+  padding:20px;
+  border-radius: 20px;
+  width:80%;
+  max-width:350px;
+  z-index: 100;
+  border:1px solid #333;
+}
+
+/* FIXED overlay selector */
+.overlay{
+  display:none;
+  position: fixed;
+  top: 0;left:0;
+  width: 100%;
+  height:100%;
+  background: rgba(0,0,0,.8); /* FIXED */
+  z-index:99;
+}
+</style>
 </head>
+
 <body>
 
-    <header>
-        <h1>StableMate</h1>
-        <div class="toggle-container">
-            <span>Admin</span>
-            <input type="checkbox" id="adminToggle" onchange="toggleAdmin()">
-        </div>
-    </header>
+<header>
+  <h1>🐴 StableMate</h1>
+  <button onclick="openLogin()">Admin</button>
+</header>
 
-    <div id="card-stack">
-        </div>
+<div id="card-stack"></div>
 
-    <div id="overlay" class="overlay"></div>
-    <div id="admin-panel">
-        <h3>Add New Horse</h3>
-        <input type="text" id="hName" placeholder="Horse Name">
-        <input type="number" id="hWeight" placeholder="Weight (kg)">
-        <input type="number" id="hHeight" placeholder="Height (cm)">
-        <input type="text" id="hQty" placeholder="Feeding Qty">
-        <button onclick="saveHorse()">Add Horse</button>
-        <button onclick="closeAdmin()" style="background:none; margin-top:10px;">Cancel</button>
-    </div>
+<div class="overlay" id="overlay" onclick="closeAll()"></div>
 
-    <script>
-        const horses = [
-            { name: "Thunder", weight: "500kg", status: "Fed", color: "#3a3a3a" },
-            { name: "Spirit", weight: "450kg", status: "Feeding...", color: "#2a2a2a" }
-        ];
+<!-- LOGIN -->
+<div id="login-panel">
+  <h3>Admin Login</h3>
+  <input type="password" id="adminPass" placeholder="Enter password">
+  <button onclick="checkLogin()">Login</button>
+  <button style="background:#555" onclick="closeLogin()">Cancel</button>
+</div>
 
-        const stack = document.getElementById('card-stack');
+<!-- ADMIN PANEL -->
+<div id="admin-panel">
+  <h3>Add New Horse</h3>
+  <input id="hName" placeholder="Horse Name">
+  <input id="hWeight" placeholder="Weight (kg)">
+  <input id="hHeight" placeholder="Height (cm)">
+  <input type="file" id="hImage" accept="image/*">
 
-        function renderCards() {
-            stack.innerHTML = '';
-            horses.forEach((horse, index) => {
-                const card = document.createElement('div');
-                card.className = 'card';
-                card.style.zIndex = horses.length - index;
-                card.innerHTML = `
-                    <div class="status-badge">${horse.status}</div>
-                    <h2>${horse.name}</h2>
-                    <p>Weight: ${horse.weight}</p>
-                    <p style="font-size: 12px;">Swipe right to mark as fed</p>
-                `;
-                
-                // Simple Click-to-Dismiss (Simulating Swipe)
-                card.onclick = () => {
-                    card.style.transform = 'translateX(200px) rotate(20deg)';
-                    card.style.opacity = '0';
-                    setTimeout(() => card.remove(), 300);
-                };
-                
-                stack.appendChild(card);
-            });
-        }
+  <button onclick="addHorse()">Save Horse</button>
+  <button style="background:#555" onclick="closeAdmin()">Close</button>
+</div>
 
-        function toggleAdmin() {
-            const checkbox = document.getElementById('adminToggle');
-            if(checkbox.checked) {
-                const pw = prompt("Enter Admin Password:");
-                if(pw === "1234") {
-                    document.getElementById('admin-panel').style.display = 'block';
-                    document.getElementById('overlay').style.display = 'block';
-                } else {
-                    alert("Wrong password!");
-                    checkbox.checked = false;
-                }
-            }
-        }
+<script>
+let horses = [];
 
-        function closeAdmin() {
-            document.getElementById('admin-panel').style.display = 'none';
-            document.getElementById('overlay').style.display = 'none';
-            document.getElementById('adminToggle').checked = false;
-        }
+// UI CONTROL
+function openLogin(){
+  document.getElementById("login-panel").style.display="block";
+  document.getElementById("overlay").style.display="block";
+}
 
-        function saveHorse() {
-            const name = document.getElementById('hName').value;
-            if(name) {
-                horses.unshift({ name: name, weight: document.getElementById('hWeight').value + 'kg', status: 'Waiting' });
-                renderCards();
-                closeAdmin();
-            }
-        }
+function closeLogin(){
+  document.getElementById("login-panel").style.display="none";
+  document.getElementById("overlay").style.display="none";
+}
 
-        renderCards();
-    </script>
+function closeAll(){
+  closeLogin();
+  closeAdmin();
+}
+
+function checkLogin(){
+  const pw = document.getElementById("adminPass").value;
+  if(pw === "1234"){
+    closeLogin();
+    document.getElementById("admin-panel").style.display="block";
+    document.getElementById("overlay").style.display="block";
+  } else {
+    alert("Wrong password");
+  }
+}
+
+function closeAdmin(){
+  document.getElementById("admin-panel").style.display="none";
+  document.getElementById("overlay").style.display="none";
+}
+
+// ADD HORSE
+function addHorse(){
+  const name = document.getElementById("hName").value;
+  const weight = document.getElementById("hWeight").value + " kg";
+  const height = document.getElementById("hHeight").value + " cm";
+  const file = document.getElementById("hImage").files[0]; // FIXED
+
+  if(!name || !file){ // FIXED
+    alert("Name and image required!");
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function(e){
+    horses.unshift({
+      name,
+      weight,
+      height,
+      image:e.target.result
+    });
+
+    renderCards();
+    closeAdmin();
+  };
+
+  reader.readAsDataURL(file);
+}
+
+function deleteHorse(index){
+  if(confirm("Delete this horse?")){
+    horses.splice(index,1);
+    renderCards();
+  }
+}
+
+function renderCards(){
+  const stack = document.getElementById("card-stack");
+  stack.innerHTML="";
+
+  if(horses.length === 0){
+    stack.innerHTML =
+      "<p style='color:#b3b3b3;margin-top:100px;'>No horses yet. Add one via Admin panel!</p>";
+    return;
+  }
+
+  horses.forEach((h,i)=>{
+    const card = document.createElement("div");
+    card.className="card";
+    card.style.zIndex = horses.length - i;
+
+    card.innerHTML = `
+      <img src="${h.image}" alt="${h.name}">
+      <div class="status">Waiting</div>
+      <h2>${h.name}</h2>
+      <p>Weight: ${h.weight}</p>
+      <p>Height: ${h.height}</p>   <!-- FIXED -->
+      <button onclick="deleteHorse(${i})">Delete Horse</button>
+    `;
+
+    stack.appendChild(card);
+  });
+}
+
+renderCards();
+</script>
 </body>
 </html>
