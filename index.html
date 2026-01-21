@@ -9,113 +9,97 @@
   --bg:#121212;
   --card:#1e1e1e;
   --accent:#ff4458;
-  --text:white;
-  --muted:#b3b3b3;
+  --fed:#4caf50;
+  --notfed:#ff9800;
 }
 
 body{
   background:var(--bg);
   color:white;
-  font-family: Segoe UI, sans-serif;
-  margin: 0;
-  text-align: center;
+  font-family:Segoe UI, sans-serif;
+  margin:0;
+  text-align:center;
 }
 
 header{
-  padding: 20px;
+  padding:20px;
   display:flex;
   justify-content:space-between;
   align-items:center;
 }
 
 #card-stack{
-  position:relative;
-  width: 90%;
-  max-width: 350px;
-  height: 500px;
+  width:90%;
+  max-width:350px;
   margin:20px auto;
 }
 
 .card{
-  position:absolute;
-  width:100%;
-  height: 100%;
-  background: var(--card);
+  background:var(--card);
   border-radius:20px;
-  box-shadow: 0 10px 30px rgba(0,0,0,.5);
   padding:20px;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  border: 1px solid #333;
+  margin-bottom:20px;
+  border:1px solid #333;
 }
 
 .card img{
   width:100%;
   height:300px;
-  object-fit: cover;
-  border-radius: 15px;
+  object-fit:cover;
+  border-radius:15px;
 }
 
-.status{
-  background:#4caf50;
-  padding:5px 10px;
-  border-radius:20px;
-  font-size: 12px;
-  width:fit-content;
-  margin-top:10px;
-}
-
-button{
-  background: var(--accent);
-  color:white;
+.status-btn{
+  width:100%;
+  padding:10px;
   border:none;
-  padding: 10px;
   border-radius:20px;
-  width: 100%;
-  margin-top: 5px;
+  color:white;
+  font-weight:bold;
   cursor:pointer;
 }
 
-#admin-panel{
+.fed{
+  background:var(--fed);
+}
+
+.notfed{
+  background:var(--notfed);
+}
+
+button{
+  background:var(--accent);
+  color:white;
+  border:none;
+  padding:10px;
+  border-radius:20px;
+  width:100%;
+  margin-top:5px;
+  cursor:pointer;
+}
+
+/* MODALS */
+#admin-panel, #login-panel{
   display:none;
-  position:  fixed;
+  position:fixed;
   top:50%;
   left:50%;
   transform:translate(-50%,-50%);
-  background:var(--card);
+  background:#1e1e1e;
   padding:20px;
-  border-radius: 15px;
-  width: 80%;
-  max-width: 400px;
-  z-index: 100;
-  border: 1px solid #333;
-}
-
-#login-panel{
-  display: none;
-  position: fixed;
-  top:50%;
-  left:50%;
-  transform: translate(-50%,-50%);
-  background:var(--card);
-  padding:20px;
-  border-radius: 20px;
+  border-radius:15px;
   width:80%;
-  max-width:350px;
-  z-index: 100;
-  border:1px solid #333;
+  max-width:400px;
+  z-index:100;
 }
 
-/* FIXED overlay selector */
 .overlay{
   display:none;
-  position: fixed;
-  top: 0;left:0;
-  width: 100%;
+  position:fixed;
+  top:0; left:0;
+  width:100%;
   height:100%;
-  background: rgba(0,0,0,.8); /* FIXED */
+  background:rgba(0,0,0,.8);
   z-index:99;
 }
 </style>
@@ -124,7 +108,7 @@ button{
 <body>
 
 <header>
-  <h1>🐴 StableMate</h1>
+  <h1>ð´ StableMate</h1>
   <button onclick="openLogin()">Admin</button>
 </header>
 
@@ -137,7 +121,7 @@ button{
   <h3>Admin Login</h3>
   <input type="password" id="adminPass" placeholder="Enter password">
   <button onclick="checkLogin()">Login</button>
-  <button style="background:#555" onclick="closeLogin()">Cancel</button>
+  <button onclick="closeLogin()" style="background:#555">Cancel</button>
 </div>
 
 <!-- ADMIN PANEL -->
@@ -149,13 +133,12 @@ button{
   <input type="file" id="hImage" accept="image/*">
 
   <button onclick="addHorse()">Save Horse</button>
-  <button style="background:#555" onclick="closeAdmin()">Close</button>
+  <button onclick="closeAdmin()" style="background:#555">Close</button>
 </div>
 
 <script>
-let horses = [];
+let horses = [];   // start empty
 
-// UI CONTROL
 function openLogin(){
   document.getElementById("login-panel").style.display="block";
   document.getElementById("overlay").style.display="block";
@@ -187,25 +170,28 @@ function closeAdmin(){
   document.getElementById("overlay").style.display="none";
 }
 
-// ADD HORSE
+/* ADD HORSE */
 function addHorse(){
   const name = document.getElementById("hName").value;
   const weight = document.getElementById("hWeight").value + " kg";
   const height = document.getElementById("hHeight").value + " cm";
-  const file = document.getElementById("hImage").files[0]; // FIXED
+  const file = document.getElementById("hImage").files[0];
 
-  if(!name || !file){ // FIXED
+  if(!name || !file){
     alert("Name and image required!");
     return;
   }
 
   const reader = new FileReader();
+
   reader.onload = function(e){
     horses.unshift({
       name,
       weight,
       height,
-      image:e.target.result
+      image:e.target.result,
+      status: "Not Fed",
+      fedAt: null        // <-- will store milliseconds
     });
 
     renderCards();
@@ -215,42 +201,87 @@ function addHorse(){
   reader.readAsDataURL(file);
 }
 
-function deleteHorse(index){
-  if(confirm("Delete this horse?")){
-    horses.splice(index,1);
-    renderCards();
+/* TOGGLE FEEDING STATUS + START TIMER */
+function toggleFed(index){
+  const h = horses[index];
+
+  if(h.status === "Not Fed"){
+    h.status = "Fed";
+    h.fedAt = Date.now();   // store exact time in milliseconds
+  } else {
+    h.status = "Not Fed";
+    h.fedAt = null;
   }
+
+  renderCards();
 }
 
+/* DELETE HORSE */
+function deleteHorse(i){
+  horses.splice(i,1);
+  renderCards();
+}
+
+/* CALCULATE HOURS SINCE FED */
+function hoursSince(ms){
+  if(!ms) return "";
+
+  const now = Date.now();
+  const diff = now - ms;          // milliseconds difference
+  const hours = diff / 1000 / 60 / 60;
+
+  if(hours < 1){
+    const minutes = Math.round(diff / 1000 / 60);
+    return `Fed ${minutes} minutes ago`;
+  }
+
+  return `Fed ${hours.toFixed(1)} hours ago`;
+}
+
+/* RENDER CARDS */
 function renderCards(){
   const stack = document.getElementById("card-stack");
   stack.innerHTML="";
 
   if(horses.length === 0){
     stack.innerHTML =
-      "<p style='color:#b3b3b3;margin-top:100px;'>No horses yet. Add one via Admin panel!</p>";
+      "<p style='color:#b3b3b3;margin-top:100px;'>No horses yet.</p>";
     return;
   }
 
   horses.forEach((h,i)=>{
     const card = document.createElement("div");
     card.className="card";
-    card.style.zIndex = horses.length - i;
+
+    const btnClass = h.status === "Fed" ? "fed" : "notfed";
+    const timeText = h.fedAt
+      ? `<p style="font-size:12px;color:#aaa;">${hoursSince(h.fedAt)}</p>`
+      : "";
 
     card.innerHTML = `
-      <img src="${h.image}" alt="${h.name}">
-      <div class="status">Waiting</div>
+      <img src="${h.image}">
       <h2>${h.name}</h2>
       <p>Weight: ${h.weight}</p>
-      <p>Height: ${h.height}</p>   <!-- FIXED -->
-      <button onclick="deleteHorse(${i})">Delete Horse</button>
+      <p>Height: ${h.height}</p>
+
+      <button class="status-btn ${btnClass}" onclick="toggleFed(${i})">
+        ${h.status}
+      </button>
+
+      ${timeText}
+
+      <button onclick="deleteHorse(${i})">Delete</button>
     `;
 
     stack.appendChild(card);
   });
 }
 
+/* UPDATE TIMER EVERY MINUTE */
+setInterval(renderCards, 60_000);
+
 renderCards();
 </script>
+
 </body>
 </html>
